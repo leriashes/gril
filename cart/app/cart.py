@@ -26,11 +26,24 @@ def add_to_cart(db: Session, user_id: str, dish_name: str, dish_price: float):
     cart.totalPrice += dish.finalPrice
     db.commit()
 
-    print(f" [+] Блюдо {dish_name} добавлено в корзину пользователя {user_id}")
+    print(f" [+] Блюдо '{dish_name}' добавлено в корзину пользователя {user_id}")
 
 
-def remove_from_cart(user_id):
-    print(f" [-] Удаление блюда из корзины пользователя {user_id}")
+def remove_from_cart(db: Session, user_id: str, dish_id: int):
+    cart = db.query(Cart).filter(Cart.user_id == user_id).first()
+
+    if not cart:
+        print(f" [-] Корзина пользователя {user_id} не найдена")
+
+    dish = db.query(Dish).filter(Dish.id == dish_id, Dish.cart_id == cart.id).first()
+
+    if dish:
+        cart.totalPrice -= dish.price
+        db.delete(dish)
+        db.commit()
+        print(f" [-] Блюдо '{dish.name}' удалено из корзины пользователя {user_id}")
+    else:
+        print(f" [-] Блюдо не найдено в корзине пользователя {user_id}")
 
 def process_message(ch, method, properties, body):
     message = json.loads(body)
@@ -47,7 +60,7 @@ def process_message(ch, method, properties, body):
     elif action == 'add_to_cart':
         add_to_cart(db, user_id, "Пицца пепперони", 528.00)
     elif action == 'remove_from_cart':
-        remove_from_cart(data['user_id'])
+        remove_from_cart(db, user_id, 2)
     
 
 def main():
