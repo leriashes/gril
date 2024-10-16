@@ -1,23 +1,35 @@
 import pika, sys, os, json
+from sqlalchemy.orm import Session
+from app.database import get_db
+from app.models import Cart
 
-def get_cart(user_id):
-    print(f" [+] Корзина пользователя {user_id}")
+def get_cart(db: Session, user_id: str):
+    cart = db.query(Cart).filter(Cart.user_id == user_id).first()
+
+    if cart:
+        print(f" [i] Корзина пользователя {user_id}: {cart}")
+    else:
+        print(f" [i] Корзина пользователя {user_id} не найдена")
+
 
 def add_to_cart(user_id):
     print(f" [+] Добавление блюда в корзину пользователя {user_id}")
 
 def remove_from_cart(user_id):
-    print(f" [+] Удаление блюда из корзины пользователя {user_id}")
+    print(f" [-] Удаление блюда из корзины пользователя {user_id}")
 
 def process_message(ch, method, properties, body):
     message = json.loads(body)
     action = message.get('action')
     data = message.get('data')
+    user_id = str(data.get('user_id'))
 
-    print(f" [x] Recieved {body}")
+    db = next(get_db())
+
+    print(f" [x] Recieved {message}")
 
     if action == 'get_cart':
-        get_cart(data['user_id'])
+        get_cart(db, user_id)
     elif action == 'add_to_cart':
         add_to_cart(data['user_id'])
     elif action == 'remove_from_cart':

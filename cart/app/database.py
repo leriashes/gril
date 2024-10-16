@@ -4,7 +4,7 @@ from sqlalchemy.ext.declarative import declarative_base
 
 DATABASE_URL = "postgresql://user:mypassword@db:5432/cartdb"
 
-engine = create_engine(DATABASE_URL, echo=True)
+engine = create_engine(DATABASE_URL, echo=False)
 
 Base = declarative_base()
 
