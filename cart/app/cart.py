@@ -25,7 +25,10 @@ def process_message(ch, method, properties, body):
     
 
 def main():
-    connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+    rabbitmq_host = os.getenv('RABBITMQ_HOST', 'rabbitmq')
+    print(rabbitmq_host)
+
+    connection = pika.BlockingConnection(pika.ConnectionParameters(rabbitmq_host))
     channel = connection.channel()
 
     channel.queue_declare(queue='cart')

@@ -1,0 +1,21 @@
+name:
+  cartservice
+
+services:
+  db:
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_DB: cartdb
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: mypassword
+    ports:
+      - 5432:5432
+
+  cart:
+    build:
+      context: ./cart
+    environment:
+      - RABBITMQ_HOST=192.168.0.210
+    depends_on:
+      - db
