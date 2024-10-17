@@ -45,7 +45,30 @@ elif chnl == 'add':
         'action': 'add_to_cart',
         'data':
         {
-            'user_id': user_id
+            'user_id': user_id,
+            'dish': {
+                'name': 'Сырная пицца',
+                'price': 500.00,
+                'dish_products': [
+                    {
+                        'id': '356',
+                        'name': 'Сыр'
+                    }
+                ],
+                'added_products': [
+                    {
+                        'id': '123',
+                        'name': 'Сыр дополнительный',
+                        'price': 25.00
+                    }
+                ],
+                'removed_products': [
+                    {
+                        'id': '36',
+                        'name': 'Сыр Бри'
+                    }
+                ],
+            }
         }
     }
 
