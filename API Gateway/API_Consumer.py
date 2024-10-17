@@ -2,10 +2,8 @@ import pika, sys, json, os
 
 def process_message(ch, method, properties, body):
     message = json.loads(body)
-    action = message.get('action')
 
-    if action == 'cart_response':
-        print(f" [x] Recieved {message}")
+    print(f" [x] Recieved {message}")
     
 
 

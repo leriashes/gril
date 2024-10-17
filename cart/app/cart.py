@@ -3,6 +3,20 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import Cart, Dish
 
+def send(response, queue: str):
+    body = json.dumps(response)
+
+    rabbitmq_host = os.getenv('RABBITMQ_HOST', 'rabbitmq')
+    connection = pika.BlockingConnection(pika.ConnectionParameters(rabbitmq_host))
+    channel = connection.channel()
+
+    channel.queue_declare(queue=queue)
+
+    channel.basic_publish(exchange='', routing_key=queue, body=body)
+    print(f" [x] Отправлено в '{queue}' {response}")
+
+    connection.close()
+
 def get_cart(db: Session, sender: str, user_id: str):
     cart = db.query(Cart).filter(Cart.user_id == user_id).first()
 
@@ -29,23 +43,7 @@ def get_cart(db: Session, sender: str, user_id: str):
             }
         }
     
-    send_cart(response, sender)
-
-
-def send_cart(response, queue: str):
-    body = json.dumps(response)
-
-    rabbitmq_host = os.getenv('RABBITMQ_HOST', 'rabbitmq')
-    connection = pika.BlockingConnection(pika.ConnectionParameters(rabbitmq_host))
-    channel = connection.channel()
-
-    channel.queue_declare(queue=queue)
-
-    channel.basic_publish(exchange='', routing_key=queue, body=body)
-    print(f" [x] Отправлено в '{queue}' {response}")
-
-    connection.close()
-
+    send(response, sender)
 
 def add_to_cart(db: Session, user_id: str, dish_name: str, dish_price: float):
     cart = db.query(Cart).filter(Cart.user_id == user_id).first()
@@ -63,22 +61,40 @@ def add_to_cart(db: Session, user_id: str, dish_name: str, dish_price: float):
 
     print(f" [+] Блюдо '{dish_name}' добавлено в корзину пользователя {user_id}")
 
-
 def remove_from_cart(db: Session, user_id: str, dish_id: int):
     cart = db.query(Cart).filter(Cart.user_id == user_id).first()
 
     if not cart:
         print(f" [-] Корзина пользователя {user_id} не найдена")
-
-    dish = db.query(Dish).filter(Dish.id == dish_id, Dish.cart_id == cart.id).first()
-
-    if dish:
-        cart.totalPrice -= dish.price
-        db.delete(dish)
-        db.commit()
-        print(f" [-] Блюдо '{dish.name}' удалено из корзины пользователя {user_id}")
+        status = 'error'
+        message = 'Cart not found'
     else:
-        print(f" [-] Блюдо не найдено в корзине пользователя {user_id}")
+        dish = db.query(Dish).filter(Dish.id == dish_id, Dish.cart_id == cart.id).first()
+
+        if dish:
+            cart.totalPrice -= dish.price
+            db.delete(dish)
+            db.commit()
+            print(f" [-] Блюдо '{dish.name}' удалено из корзины пользователя {user_id}")
+            status = 'success'
+            message = 'Dish removed'
+        else:
+            print(f" [-] Блюдо не найдено в корзине пользователя {user_id}")
+            status = 'error'
+            message = 'Dish not found'
+
+    response = {
+        'action': 'remove_response',
+        'data':
+        {
+            'user_id': user_id,
+            'dish_id': dish_id,
+            'status': status,
+            'message': message
+        }
+    }
+
+    send(response, 'API')
 
 
 def process_message(ch, method, properties, body):
@@ -97,7 +113,8 @@ def process_message(ch, method, properties, body):
     elif action == 'add_to_cart':
         add_to_cart(db, user_id, "Пицца пепперони", 528.00)
     elif action == 'remove_from_cart':
-        remove_from_cart(db, user_id, 1)
+        dish_id = data.get('dish_id')
+        remove_from_cart(db, user_id, dish_id)
     
 
 def main():

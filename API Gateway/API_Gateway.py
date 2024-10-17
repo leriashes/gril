@@ -55,11 +55,14 @@ elif chnl == 'add':
     print(f" [x] Sent 'Hello Cart, it's API Gateway! It's time to add dish to cart {user_id}")
 
 elif chnl == 'del':
+    dish_id = int(''.join(sys.argv[3])) or 1
+
     message = {
         'action': 'remove_from_cart',
         'data':
         {
-            'user_id': user_id
+            'user_id': user_id,
+            'dish_id': dish_id
         }
     }
 
