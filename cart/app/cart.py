@@ -8,8 +8,41 @@ def get_cart(db: Session, user_id: str):
 
     if cart:
         print(f" [i] Корзина пользователя {user_id}: {cart.to_dict()}")
+        response = {
+            'action': 'cart_response',
+            'data':
+            {
+                'status': 'success',
+                'cart': cart.to_dict()
+            }
+        }
     else:
         print(f" [i] Корзина пользователя {user_id} не найдена")
+        response = {
+            'action': 'cart_response',
+            'data':
+            {
+                'status': 'error',
+                'error': 'Cart not found'
+            }
+        }
+    
+    send_cart(response)
+
+
+def send_cart(response):
+    body = json.dumps(response)
+
+    rabbitmq_host = os.getenv('RABBITMQ_HOST', 'rabbitmq')
+    connection = pika.BlockingConnection(pika.ConnectionParameters(rabbitmq_host))
+    channel = connection.channel()
+
+    channel.queue_declare(queue='order')
+
+    channel.basic_publish(exchange='', routing_key='order', body=body)
+    print(f" [x] Отправлено в заказ {response}")
+
+    connection.close()
 
 
 def add_to_cart(db: Session, user_id: str, dish_name: str, dish_price: float):
@@ -65,7 +98,6 @@ def process_message(ch, method, properties, body):
 
 def main():
     rabbitmq_host = os.getenv('RABBITMQ_HOST', 'rabbitmq')
-    print(rabbitmq_host)
 
     connection = pika.BlockingConnection(pika.ConnectionParameters(rabbitmq_host))
     channel = connection.channel()

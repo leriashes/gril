@@ -1,15 +1,23 @@
-import pika, sys, json
+import pika, sys, json, os
 
 def process_message(ch, method, properties, body):
-    connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
-    channel = connection.channel()
+    message = json.loads(body)
+    action = message.get('action')
 
-    channel.queue_declare(queue='cart')
+    if action == 'get_cart':
+        connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+        channel = connection.channel()
 
-    channel.basic_publish(exchange='', routing_key='cart', body=body)
-    print(f" [x] Recieved and sent {body}")
+        channel.queue_declare(queue='cart')
 
-    connection.close()
+        channel.basic_publish(exchange='', routing_key='cart', body=body)
+        print(f" [x] Recieved and sent {message}")
+
+        connection.close()
+
+    elif action == 'cart_response':
+        print(f" [x] Recieved {message}")
+    
 
 
 def main():
