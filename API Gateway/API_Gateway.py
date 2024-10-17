@@ -13,15 +13,31 @@ user_id = int(''.join(sys.argv[2])) or 1
 if chnl == 'order':
     message = {
         'action': 'get_cart',
+        'sender': 'order',
         'data' :
         {
-            'user_id': int(user_id)
+            'user_id': user_id
         }
     }
 
     body = json.dumps(message)
 
     channel.basic_publish(exchange='', routing_key='order', body=body)
+    print(f" [x] Sent {body}")
+
+elif chnl == 'cart':
+    message = {
+        'action': 'get_cart',
+        'sender': 'API',
+        'data' :
+        {
+            'user_id': user_id
+        }
+    }
+
+    body = json.dumps(message)
+
+    channel.basic_publish(exchange='', routing_key='cart', body=body)
     print(f" [x] Sent {body}")
 
 elif chnl == 'add':

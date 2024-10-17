@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import Cart, Dish
 
-def get_cart(db: Session, user_id: str):
+def get_cart(db: Session, sender: str, user_id: str):
     cart = db.query(Cart).filter(Cart.user_id == user_id).first()
 
     if cart:
@@ -29,20 +29,20 @@ def get_cart(db: Session, user_id: str):
             }
         }
     
-    send_cart(response)
+    send_cart(response, sender)
 
 
-def send_cart(response):
+def send_cart(response, queue: str):
     body = json.dumps(response)
 
     rabbitmq_host = os.getenv('RABBITMQ_HOST', 'rabbitmq')
     connection = pika.BlockingConnection(pika.ConnectionParameters(rabbitmq_host))
     channel = connection.channel()
 
-    channel.queue_declare(queue='order')
+    channel.queue_declare(queue=queue)
 
-    channel.basic_publish(exchange='', routing_key='order', body=body)
-    print(f" [x] Отправлено в заказ {response}")
+    channel.basic_publish(exchange='', routing_key=queue, body=body)
+    print(f" [x] Отправлено в '{queue}' {response}")
 
     connection.close()
 
@@ -84,6 +84,7 @@ def remove_from_cart(db: Session, user_id: str, dish_id: int):
 def process_message(ch, method, properties, body):
     message = json.loads(body)
     action = message.get('action')
+    sender = message.get('sender')
     data = message.get('data')
     user_id = str(data.get('user_id'))
 
@@ -92,7 +93,7 @@ def process_message(ch, method, properties, body):
     print(f" [x] Recieved {message}")
 
     if action == 'get_cart':
-        get_cart(db, user_id)
+        get_cart(db, sender, user_id)
     elif action == 'add_to_cart':
         add_to_cart(db, user_id, "Пицца пепперони", 528.00)
     elif action == 'remove_from_cart':
