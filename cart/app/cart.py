@@ -12,6 +12,7 @@ def get_cart(db: Session, user_id: str):
             'action': 'cart_response',
             'data':
             {
+                'user_id': user_id,
                 'status': 'success',
                 'cart': cart.to_dict()
             }
@@ -22,6 +23,7 @@ def get_cart(db: Session, user_id: str):
             'action': 'cart_response',
             'data':
             {
+                'user_id': user_id,
                 'status': 'error',
                 'error': 'Cart not found'
             }
@@ -78,6 +80,7 @@ def remove_from_cart(db: Session, user_id: str, dish_id: int):
     else:
         print(f" [-] Блюдо не найдено в корзине пользователя {user_id}")
 
+
 def process_message(ch, method, properties, body):
     message = json.loads(body)
     action = message.get('action')
@@ -93,7 +96,7 @@ def process_message(ch, method, properties, body):
     elif action == 'add_to_cart':
         add_to_cart(db, user_id, "Пицца пепперони", 528.00)
     elif action == 'remove_from_cart':
-        remove_from_cart(db, user_id, 2)
+        remove_from_cart(db, user_id, 1)
     
 
 def main():
