@@ -92,17 +92,17 @@ class Product(BaseModel):
 class AddedProduct(Base):
     __tablename__ = 'added_products'
 
-    dish_id = Column(Integer, ForeignKey('dishes.id'), primary_key=True)
+    dish_id = Column(Integer, ForeignKey('dishes.id', ondelete='CASCADE'), primary_key=True)
     product_id = Column(String, ForeignKey('products.id'), primary_key=True)
 
 class RemovedProduct(Base):
     __tablename__ = 'removed_products'
 
-    dish_id = Column(Integer, ForeignKey('dishes.id'), primary_key=True)
+    dish_id = Column(Integer, ForeignKey('dishes.id', ondelete='CASCADE'), primary_key=True)
     product_id = Column(String, ForeignKey('products.id'), primary_key=True)
 
 class DishProduct(Base):
     __tablename__ = 'dish_products'
 
-    dish_id = Column(Integer, ForeignKey('dishes.id'), primary_key=True)
+    dish_id = Column(Integer, ForeignKey('dishes.id', ondelete='CASCADE'), primary_key=True)
     product_id = Column(String, ForeignKey('products.id'), primary_key=True)

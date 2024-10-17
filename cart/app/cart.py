@@ -241,6 +241,42 @@ def remove_from_cart(db: Session, user_id: str, dish_id: int):
 
     send(response, 'API')
 
+def clear_cart(db: Session, sender: str, user_id: str):
+    cart = db.query(Cart).filter(Cart.user_id == user_id).first()
+
+    if cart:
+        for dish in cart.dishes:
+            cart.totalPrice -= dish.price
+            db.delete(dish)
+            db.commit()
+
+        cart.dishes.clear()
+        cart.totalPrice = 0.0
+        db.commit()
+        
+        print(f" [i] Корзина пользователя {user_id} очищена: {cart.to_dict()}")
+        response = {
+            'action': 'clear_response',
+            'data':
+            {
+                'user_id': user_id,
+                'status': 'success',
+                'cart': cart.to_dict()
+            }
+        }
+    else:
+        print(f" [i] Корзина пользователя {user_id} не найдена")
+        response = {
+            'action': 'clear_response',
+            'data':
+            {
+                'user_id': user_id,
+                'status': 'error',
+                'error': 'Cart not found'
+            }
+        }
+    
+    send(response, sender)
 
 def process_message(ch, method, properties, body):
     message = json.loads(body)
@@ -255,6 +291,8 @@ def process_message(ch, method, properties, body):
 
     if action == 'get_cart':
         get_cart(db, sender, user_id)
+    elif action == 'clear_cart':
+        clear_cart(db, sender, user_id)
     elif action == 'add_to_cart':
         dish = data.get('dish')
         add_to_cart(db, user_id, dish)
