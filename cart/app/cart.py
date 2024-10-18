@@ -276,8 +276,7 @@ def get_dish(db: Session, user_id: str, dish_id: int):
 
     send(response, 'API')
 
-
-def clear_cart(db: Session, sender: str, user_id: str):
+def clear_cart(db: Session, user_id: str):
     cart = db.query(Cart).filter(Cart.user_id == user_id).first()
 
     if cart:
@@ -312,7 +311,7 @@ def clear_cart(db: Session, sender: str, user_id: str):
             }
         }
     
-    send(response, sender)
+    send(response, 'API')
 
 def process_message(ch, method, properties, body):
     message = json.loads(body)
@@ -328,7 +327,7 @@ def process_message(ch, method, properties, body):
     if action == 'get_cart':
         get_cart(db, sender, user_id)
     elif action == 'clear_cart':
-        clear_cart(db, sender, user_id)
+        clear_cart(db, user_id)
     elif action == 'add_dish':
         dish = data.get('dish')
         add_dish(db, user_id, dish)

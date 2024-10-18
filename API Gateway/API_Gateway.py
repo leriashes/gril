@@ -42,7 +42,7 @@ elif chnl == 'cart':
 
 elif chnl == 'dish':
     dish_id = int(''.join(sys.argv[3])) or 1
-    
+
     message = {
         'action': 'get_dish',
         'data' :
@@ -60,7 +60,6 @@ elif chnl == 'dish':
 elif chnl == 'clear':
     message = {
         'action': 'clear_cart',
-        'sender': 'API',
         'data' :
         {
             'user_id': user_id
