@@ -241,6 +241,42 @@ def remove_dish(db: Session, user_id: str, dish_id: int):
 
     send(response, 'API')
 
+def get_dish(db: Session, user_id: str, dish_id: int):
+    cart = db.query(Cart).filter(Cart.user_id == user_id).first()
+
+    if not cart:
+        print(f" [-] Корзина пользователя {user_id} не найдена")
+        status = 'error'
+        error = 'Cart not found'
+    else:
+        dish = db.query(Dish).filter(Dish.id == dish_id, Dish.cart_id == cart.id).first()
+
+        if dish:
+            print(f" [-] Блюдо '{dish.name}' из корзины пользователя {user_id}")
+            status = 'success'
+        else:
+            print(f" [-] Блюдо не найдено в корзине пользователя {user_id}")
+            status = 'error'
+            error = 'Dish not found'
+
+    response = {
+        'action': 'dish_response',
+        'data':
+        {
+            'user_id': user_id,
+            'dish_id': dish_id,
+            'status': status,
+        }
+    }
+
+    if dish:
+        response['data']['dish'] = dish.to_dict()
+    else:
+        response['data']['error'] = error
+
+    send(response, 'API')
+
+
 def clear_cart(db: Session, sender: str, user_id: str):
     cart = db.query(Cart).filter(Cart.user_id == user_id).first()
 
@@ -299,6 +335,9 @@ def process_message(ch, method, properties, body):
     elif action == 'remove_dish':
         dish_id = data.get('dish_id')
         remove_dish(db, user_id, dish_id)
+    elif action == 'get_dish':
+        dish_id = data.get('dish_id')
+        get_dish(db, user_id, dish_id)
     
 
 def main():

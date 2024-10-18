@@ -40,6 +40,23 @@ elif chnl == 'cart':
     channel.basic_publish(exchange='', routing_key='cart', body=body)
     print(f" [x] Sent {body}")
 
+elif chnl == 'dish':
+    dish_id = int(''.join(sys.argv[3])) or 1
+    
+    message = {
+        'action': 'get_dish',
+        'data' :
+        {
+            'user_id': user_id,
+            'dish_id': dish_id
+        }
+    }
+
+    body = json.dumps(message)
+
+    channel.basic_publish(exchange='', routing_key='cart', body=body)
+    print(f" [x] Sent {body}")
+
 elif chnl == 'clear':
     message = {
         'action': 'clear_cart',
