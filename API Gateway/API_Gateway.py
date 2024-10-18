@@ -129,6 +129,40 @@ elif chnl == 'del':
     channel.basic_publish(exchange='', routing_key='cart', body=body)
     print(f" [x] Sent 'Hello Cart, it's API Gateway! It's time to del dish from cart {user_id}")
 
+elif chnl == 'upd':
+    dish_id = int(''.join(sys.argv[3])) or 1
+
+    message = {
+        'action': 'add_dish',
+        'data':
+        {
+            'user_id': user_id,
+            'dish_id': dish_id,
+            'dish': {
+                'name': 'Пицца маргарита',
+                'price': 600.00,
+                'dish_products': [
+                    {
+                        'id': '357',
+                        'name': 'Салями'
+                    },
+                ],
+                'added_products': [
+                    {
+                        'id': '123',
+                        'name': 'Сыр дополнительный',
+                        'price': 25.00
+                    }
+                ],
+            }
+        }
+    }
+
+    body = json.dumps(message)
+
+    channel.basic_publish(exchange='', routing_key='cart', body=body)
+    print(f" [x] Sent 'Hello Cart, it's API Gateway! It's time to update dish in cart {user_id}")
+
 else:
     channel.basic_publish(exchange='', routing_key='cart', body='Hello Cart, it\'s API Gateway!')
     print(f" {chnl} [x] Sent 'Hello Cart, it's API Gateway!'")

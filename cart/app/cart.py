@@ -46,6 +46,84 @@ def get_cart(db: Session, sender: str, user_id: str):
     
     send(response, sender)
 
+def produce_product(db: Session, id, name, price):
+    product = db.query(Product).filter(Product.id == id).first()
+
+    if product is None:
+        while product is None:
+            try:
+                product = Product(
+                    id=id,
+                    name=(name or ''),
+                    price=(price or 0.0)
+                )
+                
+                db.add(product)
+                db.commit()
+            except IntegrityError:
+                db.rollback()
+                product = db.query(Product).filter(Product.id == id).first()
+
+                if product is not None:
+                    if name is not None:
+                        product.name = name
+                    if price is not None:
+                        product.price = price
+                    db.commit()
+    else:
+        if name is not None:
+            product.name = name
+        if price is not None:
+            product.price = price
+        db.commit()
+
+def fill_products(db: Session, dish_data: dict, dish_id: int):
+    dish = db.query(Dish).filter(Dish.id == dish_id).first()
+
+    if dish:
+        dish_products = dish_data.get('dish_products', [])
+        for prod_data in dish_products:
+            id = prod_data.get('id')
+            name = prod_data.get('name')
+            price = prod_data.get('price')
+
+            if id is not None:
+                produce_product(db, id, name, price)
+                product = db.query(Product).filter(Product.id == id).first()
+                
+                if product not in dish.dish_products:
+                    dish.dish_products.append(product)
+                db.commit()
+
+        rem_products = dish_data.get('removed_products', [])
+        for prod_data in rem_products:
+            id = prod_data.get('id')
+            name = prod_data.get('name')
+            price = prod_data.get('price')
+
+            if id is not None:
+                produce_product(db, id, name, price)
+                product = db.query(Product).filter(Product.id == id).first()
+                
+                if product not in dish.removed_products:
+                    dish.removed_products.append(product)
+                db.commit()
+
+        add_products = dish_data.get('added_products', [])
+        for prod_data in add_products:
+            id = prod_data.get('id')
+            name = prod_data.get('name')
+            price = prod_data.get('price')
+
+            if id is not None:
+                produce_product(db, id, name, price)
+                product = db.query(Product).filter(Product.id == id).first()
+                
+                if product not in dish.added_products:
+                    dish.added_products.append(product)
+                dish.finalPrice += product.price
+                db.commit()
+
 def add_dish(db: Session, user_id: str, dish_data: dict):
     cart = db.query(Cart).filter(Cart.user_id == user_id).first()
 
@@ -68,129 +146,7 @@ def add_dish(db: Session, user_id: str, dish_data: dict):
     cart.totalPrice += dish.price
     db.commit()
 
-    dish_products = dish_data.get('dish_products', [])
-    for prod_data in dish_products:
-        id = prod_data.get('id')
-        name = prod_data.get('name')
-        price = prod_data.get('price')
-
-        if id is not None:
-            product = db.query(Product).filter(Product.id == id).first()
-
-            if product is None:
-                while product is None:
-                    try:
-                        product = Product(
-                            id=prod_data.get('id'),
-                            name=(name or ''),
-                            price=(price or 0.0)
-                        )
-                        
-                        db.add(product)
-                        db.commit()
-                    except IntegrityError:
-                        db.rollback()
-                        product = db.query(Product).filter(Product.id == id).first()
-
-                        if product is not None:
-                            if name is not None:
-                                product.name = name
-                            if price is not None:
-                                product.price = price
-                            db.commit()
-            else:
-                if name is not None:
-                    product.name = name
-                if price is not None:
-                    product.price = price
-                db.commit()
-            
-            if product not in dish.dish_products:
-                dish.dish_products.append(product)
-            db.commit()
-
-    rem_products = dish_data.get('removed_products', [])
-    for prod_data in rem_products:
-        id = prod_data.get('id')
-        name = prod_data.get('name')
-        price = prod_data.get('price')
-
-        if id is not None:
-            product = db.query(Product).filter(Product.id == id).first()
-
-            if product is None:
-                while product is None:
-                    try:
-                        product = Product(
-                            id=prod_data.get('id'),
-                            name=(name or ''),
-                            price=(price or 0.0)
-                        )
-
-                        db.add(product)
-                        db.commit()
-                    except IntegrityError:
-                        db.rollback()
-                        product = db.query(Product).filter(Product.id == id).first()
-
-                        if product is not None:
-                            if name is not None:
-                                product.name = name
-                            if price is not None:
-                                product.price = price
-                            db.commit()
-            else:
-                if name is not None:
-                    product.name = name
-                if price is not None:
-                    product.price = price
-                db.commit()
-            
-            if product not in dish.removed_products:
-                dish.removed_products.append(product)
-            db.commit()
-
-    add_products = dish_data.get('added_products', [])
-    for prod_data in add_products:
-        id = prod_data.get('id')
-        name = prod_data.get('name')
-        price = prod_data.get('price')
-
-        if id is not None:
-            product = db.query(Product).filter(Product.id == id).first()
-
-            if product is None:
-                while product is None:
-                    try:
-                        product = Product(
-                            id=prod_data.get('id'),
-                            name=(name or ''),
-                            price=(price or 0.0)
-                        )
-
-                        db.add(product)
-                        db.commit()
-                    except IntegrityError:
-                        db.rollback()
-                        product = db.query(Product).filter(Product.id == id).first()
-
-                        if product is not None:
-                            if name is not None:
-                                product.name = name
-                            if price is not None:
-                                product.price = price
-                            db.commit()
-            else:
-                if name is not None:
-                    product.name = name
-                if price is not None:
-                    product.price = price
-                db.commit()
-            
-            if product not in dish.added_products:
-                dish.added_products.append(product)
-            dish.finalPrice += product.price
-            db.commit()
+    fill_products(db, dish_data, dish.id)
 
     cart.totalPrice += dish.finalPrice - dish.price
     db.commit()
@@ -279,6 +235,74 @@ def get_dish(db: Session, user_id: str, dish_id: int):
 
     send(response, 'API')
 
+def update_dish(db: Session, user_id: str, dish_id: int, dish_data: dict):
+    cart = db.query(Cart).filter(Cart.user_id == user_id).first()
+
+    if not cart:
+        print(f" [-] Корзина пользователя {user_id} не найдена")
+        status = 'error'
+        error = 'Cart not found'
+    else:
+        dish = db.query(Dish).filter(Dish.id == dish_id, Dish.cart_id == cart.id).first()
+
+        if dish:
+            cart.totalPrice -= dish.finalPrice 
+
+            dish.name = dish_data.get('name', dish.name)
+            dish.category = dish_data.get('category', dish.category)
+            dish.size = dish_data.get('size', dish.size)
+            dish.price = dish_data.get('price', dish.price)
+            dish.sauce = dish_data.get('sauce', dish.sauce)
+
+            cart.totalPrice += dish.price
+
+            new_product_ids = {product_data.get('id') for product_data in dish_data.get('dish_products', [])}
+
+            for product in dish.dish_products:
+                if product.id not in new_product_ids:
+                    dish.dish_products.remove(product)
+            
+            new_product_ids = {product_data.get('id') for product_data in dish_data.get('added_products', [])}
+
+            for product in dish.added_products:
+                if product.id not in new_product_ids:
+                    dish.added_products.remove(product)
+
+            new_product_ids = {product_data.get('id') for product_data in dish_data.get('removed_products', [])}
+
+            for product in dish.removed_products:
+                if product.id not in new_product_ids:
+                    dish.removed_products.remove(product)
+
+            fill_products(db, dish_data, dish.id)
+
+            cart.totalPrice += dish.finalPrice - dish.price
+            db.commit()
+
+            print(f" [-] Блюдо '{dish.name}' из корзины пользователя {user_id} обновлено")
+            status = 'success'
+        else:
+            print(f" [-] Блюдо не найдено в корзине пользователя {user_id}")
+            status = 'error'
+            error = 'Dish not found'
+
+    response = {
+        'action': 'update_response',
+        'data':
+        {
+            'user_id': user_id,
+            'dish_id': dish_id,
+            'status': status
+        }
+    }
+
+    if dish:
+        response['data']['dish'] = dish.to_dict()
+    else:
+        response['data']['error'] = error
+
+    send(response, 'API')
+
 def clear_cart(db: Session, user_id: str):
     cart = db.query(Cart).filter(Cart.user_id == user_id).first()
 
@@ -340,6 +364,10 @@ def process_message(ch, method, properties, body):
     elif action == 'get_dish':
         dish_id = data.get('dish_id')
         get_dish(db, user_id, dish_id)
+    elif action == 'update_dish':
+        dish_id = data.get('dish_id')
+        dish = data.get('dish')
+        get_dish(db, user_id, dish_id, dish)
     
 
 def main():
