@@ -85,7 +85,7 @@ def add_dish(db: Session, user_id: str, dish_data: dict):
                             name=(name or ''),
                             price=(price or 0.0)
                         )
-
+                        
                         db.add(product)
                         db.commit()
                     except IntegrityError:
@@ -105,7 +105,8 @@ def add_dish(db: Session, user_id: str, dish_data: dict):
                     product.price = price
                 db.commit()
             
-            dish.dish_products.append(product)
+            if product not in dish.dish_products:
+                dish.dish_products.append(product)
             db.commit()
 
     rem_products = dish_data.get('removed_products', [])
@@ -145,7 +146,8 @@ def add_dish(db: Session, user_id: str, dish_data: dict):
                     product.price = price
                 db.commit()
             
-            dish.removed_products.append(product)
+            if product not in dish.removed_products:
+                dish.removed_products.append(product)
             db.commit()
 
     add_products = dish_data.get('added_products', [])
@@ -185,7 +187,8 @@ def add_dish(db: Session, user_id: str, dish_data: dict):
                     product.price = price
                 db.commit()
             
-            dish.added_products.append(product)
+            if product not in dish.added_products:
+                dish.added_products.append(product)
             dish.finalPrice += product.price
             db.commit()
 

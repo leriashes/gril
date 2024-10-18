@@ -84,6 +84,10 @@ elif chnl == 'add':
                     {
                         'id': '356',
                         'name': 'Сыр'
+                    },
+                    {
+                        'id': '356',
+                        'name': 'Сыр'
                     }
                 ],
                 'added_products': [
