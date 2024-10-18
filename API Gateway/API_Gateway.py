@@ -80,7 +80,7 @@ elif chnl == 'add':
             'dish': {
                 'name': 'Сырная пицца',
                 'price': 500.00,
-                'dish_products': [
+                'products': [
                     {
                         'id': '356',
                         'name': 'Сыр'
@@ -133,7 +133,7 @@ elif chnl == 'upd':
     dish_id = int(''.join(sys.argv[3])) or 1
 
     message = {
-        'action': 'add_dish',
+        'action': 'update_dish',
         'data':
         {
             'user_id': user_id,
@@ -141,7 +141,7 @@ elif chnl == 'upd':
             'dish': {
                 'name': 'Пицца маргарита',
                 'price': 600.00,
-                'dish_products': [
+                'products': [
                     {
                         'id': '357',
                         'name': 'Салями'
@@ -152,6 +152,11 @@ elif chnl == 'upd':
                         'id': '123',
                         'name': 'Сыр дополнительный',
                         'price': 25.00
+                    },
+                    {
+                        'id': '183',
+                        'name': 'Перец дополнительный',
+                        'price': 100.00
                     }
                 ],
             }

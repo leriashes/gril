@@ -64,7 +64,7 @@ class Dish(BaseModel):
     def to_dict(self):
         ordered_keys = ['id', 'name', 'category', 'size', 'price', 'finalPrice', 'sauce']
         dish_dict = super().to_dict(ordered_keys)
-        dish_dict['dish_products'] = [product.to_dict() for product in self.dish_products]
+        dish_dict['products'] = [product.to_dict() for product in self.dish_products]
         dish_dict['added_products'] = [product.to_dict() for product in self.added_products]
         dish_dict['removed_products'] = [product.to_dict() for product in self.removed_products]
         return dish_dict

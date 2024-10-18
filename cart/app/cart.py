@@ -81,7 +81,7 @@ def fill_products(db: Session, dish_data: dict, dish_id: int):
     dish = db.query(Dish).filter(Dish.id == dish_id).first()
 
     if dish:
-        dish_products = dish_data.get('dish_products', [])
+        dish_products = dish_data.get('products', [])
         for prod_data in dish_products:
             id = prod_data.get('id')
             name = prod_data.get('name')
@@ -158,7 +158,6 @@ def add_dish(db: Session, user_id: str, dish_data: dict):
         {
             'user_id': user_id,
             'status': 'success',
-            'cart_id': cart.id,
             'dish': dish.to_dict()
         }
     }
@@ -175,7 +174,7 @@ def remove_dish(db: Session, user_id: str, dish_id: int):
         dish = db.query(Dish).filter(Dish.id == dish_id, Dish.cart_id == cart.id).first()
 
         if dish:
-            cart.totalPrice -= dish.price
+            cart.totalPrice -= dish.finalPrice
             db.delete(dish)
             db.commit()
 
@@ -204,17 +203,17 @@ def get_dish(db: Session, user_id: str, dish_id: int):
     cart = db.query(Cart).filter(Cart.user_id == user_id).first()
 
     if not cart:
-        print(f" [-] Корзина пользователя {user_id} не найдена")
+        print(f" [i] Корзина пользователя {user_id} не найдена")
         status = 'error'
         error = 'Cart not found'
     else:
         dish = db.query(Dish).filter(Dish.id == dish_id, Dish.cart_id == cart.id).first()
 
         if dish:
-            print(f" [-] Блюдо '{dish.name}' из корзины пользователя {user_id}")
+            print(f" [i] Блюдо '{dish.name}' из корзины пользователя {user_id}")
             status = 'success'
         else:
-            print(f" [-] Блюдо не найдено в корзине пользователя {user_id}")
+            print(f" [i] Блюдо не найдено в корзине пользователя {user_id}")
             status = 'error'
             error = 'Dish not found'
 
@@ -228,7 +227,7 @@ def get_dish(db: Session, user_id: str, dish_id: int):
         }
     }
 
-    if dish:
+    if cart and dish:
         response['data']['dish'] = dish.to_dict()
     else:
         response['data']['error'] = error
@@ -239,7 +238,7 @@ def update_dish(db: Session, user_id: str, dish_id: int, dish_data: dict):
     cart = db.query(Cart).filter(Cart.user_id == user_id).first()
 
     if not cart:
-        print(f" [-] Корзина пользователя {user_id} не найдена")
+        print(f" [u] Корзина пользователя {user_id} не найдена")
         status = 'error'
         error = 'Cart not found'
     else:
@@ -255,8 +254,9 @@ def update_dish(db: Session, user_id: str, dish_id: int, dish_data: dict):
             dish.sauce = dish_data.get('sauce', dish.sauce)
 
             cart.totalPrice += dish.price
+            dish.finalPrice = dish.price
 
-            new_product_ids = {product_data.get('id') for product_data in dish_data.get('dish_products', [])}
+            new_product_ids = {product_data.get('id') for product_data in dish_data.get('products', [])}
 
             for product in dish.dish_products:
                 if product.id not in new_product_ids:
@@ -279,10 +279,10 @@ def update_dish(db: Session, user_id: str, dish_id: int, dish_data: dict):
             cart.totalPrice += dish.finalPrice - dish.price
             db.commit()
 
-            print(f" [-] Блюдо '{dish.name}' из корзины пользователя {user_id} обновлено")
+            print(f" [u] Блюдо '{dish.name}' из корзины пользователя {user_id} обновлено")
             status = 'success'
         else:
-            print(f" [-] Блюдо не найдено в корзине пользователя {user_id}")
+            print(f" [u] Блюдо не найдено в корзине пользователя {user_id}")
             status = 'error'
             error = 'Dish not found'
 
@@ -296,7 +296,7 @@ def update_dish(db: Session, user_id: str, dish_id: int, dish_data: dict):
         }
     }
 
-    if dish:
+    if cart and dish:
         response['data']['dish'] = dish.to_dict()
     else:
         response['data']['error'] = error
@@ -316,7 +316,7 @@ def clear_cart(db: Session, user_id: str):
         cart.totalPrice = 0.0
         db.commit()
 
-        print(f" [i] Корзина пользователя {user_id} очищена: {cart.to_dict()}")
+        print(f" [o] Корзина пользователя {user_id} очищена: {cart.to_dict()}")
         response = {
             'action': 'clear_response',
             'data':
@@ -327,7 +327,7 @@ def clear_cart(db: Session, user_id: str):
             }
         }
     else:
-        print(f" [i] Корзина пользователя {user_id} не найдена")
+        print(f" [o] Корзина пользователя {user_id} не найдена")
         response = {
             'action': 'clear_response',
             'data':
@@ -367,7 +367,7 @@ def process_message(ch, method, properties, body):
     elif action == 'update_dish':
         dish_id = data.get('dish_id')
         dish = data.get('dish')
-        get_dish(db, user_id, dish_id, dish)
+        update_dish(db, user_id, dish_id, dish)
     
 
 def main():
