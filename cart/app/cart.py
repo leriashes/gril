@@ -46,7 +46,7 @@ def get_cart(db: Session, sender: str, user_id: str):
     
     send(response, sender)
 
-def add_to_cart(db: Session, user_id: str, dish_data: dict):
+def add_dish(db: Session, user_id: str, dish_data: dict):
     cart = db.query(Cart).filter(Cart.user_id == user_id).first()
 
     if not cart:
@@ -205,7 +205,7 @@ def add_to_cart(db: Session, user_id: str, dish_data: dict):
     }
     send(response, 'API')
 
-def remove_from_cart(db: Session, user_id: str, dish_id: int):
+def remove_dish(db: Session, user_id: str, dish_id: int):
     cart = db.query(Cart).filter(Cart.user_id == user_id).first()
 
     if not cart:
@@ -253,7 +253,7 @@ def clear_cart(db: Session, sender: str, user_id: str):
         cart.dishes.clear()
         cart.totalPrice = 0.0
         db.commit()
-        
+
         print(f" [i] Корзина пользователя {user_id} очищена: {cart.to_dict()}")
         response = {
             'action': 'clear_response',
@@ -293,12 +293,12 @@ def process_message(ch, method, properties, body):
         get_cart(db, sender, user_id)
     elif action == 'clear_cart':
         clear_cart(db, sender, user_id)
-    elif action == 'add_to_cart':
+    elif action == 'add_dish':
         dish = data.get('dish')
-        add_to_cart(db, user_id, dish)
-    elif action == 'remove_from_cart':
+        add_dish(db, user_id, dish)
+    elif action == 'remove_dish':
         dish_id = data.get('dish_id')
-        remove_from_cart(db, user_id, dish_id)
+        remove_dish(db, user_id, dish_id)
     
 
 def main():

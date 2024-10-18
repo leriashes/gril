@@ -57,7 +57,7 @@ elif chnl == 'clear':
 
 elif chnl == 'add':
     message = {
-        'action': 'add_to_cart',
+        'action': 'add_dish',
         'data':
         {
             'user_id': user_id,
@@ -96,7 +96,7 @@ elif chnl == 'del':
     dish_id = int(''.join(sys.argv[3])) or 1
 
     message = {
-        'action': 'remove_from_cart',
+        'action': 'remove_dish',
         'data':
         {
             'user_id': user_id,
