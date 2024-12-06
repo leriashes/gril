@@ -18,12 +18,13 @@ def send(response, queue: str):
 
     connection.close()
 
-def get_cart(db: Session, sender: str, user_id: str):
+def get_cart(db: Session, id: str, sender: str, user_id: str):
     cart = db.query(Cart).filter(Cart.user_id == user_id).first()
 
     if cart:
         print(f" [i] Корзина пользователя {user_id}: {cart.to_dict()}")
         response = {
+            'id': id,
             'action': 'cart_response',
             'data':
             {
@@ -35,6 +36,7 @@ def get_cart(db: Session, sender: str, user_id: str):
     else:
         print(f" [i] Корзина пользователя {user_id} не найдена")
         response = {
+            'id': id,
             'action': 'cart_response',
             'data':
             {
@@ -124,7 +126,7 @@ def fill_products(db: Session, dish_data: dict, dish_id: int):
                 dish.finalPrice += product.price
                 db.commit()
 
-def add_dish(db: Session, user_id: str, dish_data: dict):
+def add_dish(db: Session, id: str, user_id: str, dish_data: dict):
     cart = db.query(Cart).filter(Cart.user_id == user_id).first()
 
     if not cart:
@@ -153,6 +155,7 @@ def add_dish(db: Session, user_id: str, dish_data: dict):
 
     print(f" [+] Блюдо '{dish.to_dict()}' добавлено в корзину пользователя {user_id}")
     response = {
+        'id': id,
         'action': 'add_response',
         'data':
         {
@@ -163,7 +166,7 @@ def add_dish(db: Session, user_id: str, dish_data: dict):
     }
     send(response, 'API')
 
-def remove_dish(db: Session, user_id: str, dish_id: int):
+def remove_dish(db: Session, id: str, user_id: str, dish_id: int):
     cart = db.query(Cart).filter(Cart.user_id == user_id).first()
 
     if not cart:
@@ -187,6 +190,7 @@ def remove_dish(db: Session, user_id: str, dish_id: int):
             message = 'Dish not found'
 
     response = {
+        'id': id,
         'action': 'remove_response',
         'data':
         {
@@ -199,7 +203,7 @@ def remove_dish(db: Session, user_id: str, dish_id: int):
 
     send(response, 'API')
 
-def get_dish(db: Session, user_id: str, dish_id: int):
+def get_dish(db: Session, id: str, user_id: str, dish_id: int):
     cart = db.query(Cart).filter(Cart.user_id == user_id).first()
 
     if not cart:
@@ -218,6 +222,7 @@ def get_dish(db: Session, user_id: str, dish_id: int):
             error = 'Dish not found'
 
     response = {
+        'id': id,
         'action': 'dish_response',
         'data':
         {
@@ -234,7 +239,7 @@ def get_dish(db: Session, user_id: str, dish_id: int):
 
     send(response, 'API')
 
-def update_dish(db: Session, user_id: str, dish_id: int, dish_data: dict):
+def update_dish(db: Session, id: str, user_id: str, dish_id: int, dish_data: dict):
     cart = db.query(Cart).filter(Cart.user_id == user_id).first()
 
     if not cart:
@@ -287,6 +292,7 @@ def update_dish(db: Session, user_id: str, dish_id: int, dish_data: dict):
             error = 'Dish not found'
 
     response = {
+        'id': id,
         'action': 'update_response',
         'data':
         {
@@ -303,7 +309,7 @@ def update_dish(db: Session, user_id: str, dish_id: int, dish_data: dict):
 
     send(response, 'API')
 
-def clear_cart(db: Session, user_id: str):
+def clear_cart(db: Session, id: str, user_id: str):
     cart = db.query(Cart).filter(Cart.user_id == user_id).first()
 
     if cart:
@@ -329,6 +335,7 @@ def clear_cart(db: Session, user_id: str):
     else:
         print(f" [o] Корзина пользователя {user_id} не найдена")
         response = {
+            'id': id,
             'action': 'clear_response',
             'data':
             {
@@ -342,6 +349,7 @@ def clear_cart(db: Session, user_id: str):
 
 def process_message(ch, method, properties, body):
     message = json.loads(body)
+    id = str(message.get('id'))
     action = message.get('action')
     sender = message.get('sender')
     data = message.get('data')
@@ -352,22 +360,22 @@ def process_message(ch, method, properties, body):
     print(f" [x] Recieved {message}")
 
     if action == 'get_cart':
-        get_cart(db, sender, user_id)
+        get_cart(db, id, sender, user_id)
     elif action == 'clear_cart':
-        clear_cart(db, user_id)
+        clear_cart(db, id, user_id)
     elif action == 'add_dish':
         dish = data.get('dish')
-        add_dish(db, user_id, dish)
+        add_dish(db, id, user_id, dish)
     elif action == 'remove_dish':
         dish_id = data.get('dish_id')
-        remove_dish(db, user_id, dish_id)
+        remove_dish(db, id, user_id, dish_id)
     elif action == 'get_dish':
         dish_id = data.get('dish_id')
-        get_dish(db, user_id, dish_id)
+        get_dish(db, id, user_id, dish_id)
     elif action == 'update_dish':
         dish_id = data.get('dish_id')
         dish = data.get('dish')
-        update_dish(db, user_id, dish_id, dish)
+        update_dish(db, id, user_id, dish_id, dish)
     
 
 def main():
