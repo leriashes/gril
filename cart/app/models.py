@@ -1,6 +1,6 @@
 from sqlalchemy import Column, ForeignKey, Integer, String, Float, Text
 from sqlalchemy.orm import relationship
-from app.database import Base
+from cart.app.database import Base
 
 class BaseModel(Base):
     __abstract__ = True
